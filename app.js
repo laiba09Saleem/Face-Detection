@@ -33,15 +33,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function loadModels() {
     try {
-      await faceapi.nets.tinyFaceDetector.loadFromUri('models');
-      await faceapi.nets.faceLandmark68TinyNet.loadFromUri('models');
-      await faceapi.nets.faceRecognitionNet.loadFromUri('models');
-      await faceapi.nets.faceExpressionNet.loadFromUri('models');
-      await faceapi.nets.ageGenderNet.loadFromUri('models');
+      const modelPath = '/Face-Detection/models'; // ✅ Adjusted for GitHub Pages repo subfolder
+      await faceapi.nets.tinyFaceDetector.loadFromUri(modelPath);
+      await faceapi.nets.faceLandmark68TinyNet.loadFromUri(modelPath);
+      await faceapi.nets.faceRecognitionNet.loadFromUri(modelPath);
+      await faceapi.nets.faceExpressionNet.loadFromUri(modelPath);
+      await faceapi.nets.ageGenderNet.loadFromUri(modelPath);
       console.log('✅ All models loaded successfully!');
     } catch (error) {
       console.error('❌ Error loading models:', error);
-      alert('Error loading face detection models. Please ensure:\n1. You have a "models" folder with all required files\n2. You are running on a live server or GitHub Pages.');
+      alert('Error loading face detection models. Please ensure:\n1. You have a "models" folder in your repo\n2. You are running on GitHub Pages or a live server.');
     }
   }
 
