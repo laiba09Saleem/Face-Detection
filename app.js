@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const inputImage = document.getElementById('inputImage');
   const inputVideo = document.getElementById('inputVideo');
   const overlay = document.getElementById('overlay');
-  const detectionOptions = document.getElementById('detectionOptions'); // now a single select
+  const detectionOptions = document.getElementById('detectionOptions');
   const minConfidence = document.getElementById('minConfidence');
   const confidenceValue = document.getElementById('confidenceValue');
   const resultsTable = document.getElementById('resultsTable');
@@ -18,10 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let stream = null;
   let detectionInterval = null;
 
-  // Default detection option
-  let selectedOption = 'face'; 
-
-  // Minimum confidence threshold
+  let selectedOption = 'face';
   let minConf = 0.5;
 
   inputType.addEventListener('change', handleInputTypeChange);
@@ -36,15 +33,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function loadModels() {
     try {
-      await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-      await faceapi.nets.faceLandmark68TinyNet.loadFromUri('/models');
-      await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
-      await faceapi.nets.faceExpressionNet.loadFromUri('/models');
-      await faceapi.nets.ageGenderNet.loadFromUri('/models');
+      await faceapi.nets.tinyFaceDetector.loadFromUri('models');
+      await faceapi.nets.faceLandmark68TinyNet.loadFromUri('models');
+      await faceapi.nets.faceRecognitionNet.loadFromUri('models');
+      await faceapi.nets.faceExpressionNet.loadFromUri('models');
+      await faceapi.nets.ageGenderNet.loadFromUri('models');
       console.log('✅ All models loaded successfully!');
     } catch (error) {
       console.error('❌ Error loading models:', error);
-      alert('Error loading face detection models. Please ensure:\n1. You have a "models" folder with all required files\n2. You are running on a local server (not file://)');
+      alert('Error loading face detection models. Please ensure:\n1. You have a "models" folder with all required files\n2. You are running on a live server or GitHub Pages.');
     }
   }
 
@@ -121,7 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function updateDetectionOption() {
-    selectedOption = detectionOptions.value;  // Single select, just get value
+    selectedOption = detectionOptions.value;
   }
 
   function updateMinConfidence() {
@@ -144,17 +141,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     let detections;
 
     try {
-      // Prepare options for face detection
       const tinyFaceOptions = new faceapi.TinyFaceDetectorOptions({
         inputSize: 512,
         scoreThreshold: minConf
       });
 
-      // Detect faces with or without additional features
       if (selectedOption === 'face') {
         detections = await faceapi.detectAllFaces(input, tinyFaceOptions);
       } else {
-        // Use withFaceLandmarks, withFaceExpressions, withAgeAndGender selectively based on selectedOption
         detections = await faceapi.detectAllFaces(input, tinyFaceOptions);
 
         if (selectedOption === 'landmarks') {
@@ -176,7 +170,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const context = overlay.getContext('2d');
     context.clearRect(0, 0, overlay.width, overlay.height);
 
-    // Draw detection overlays based on selected option
     if (selectedOption === 'face') {
       faceapi.draw.drawDetections(overlay, resizedDetections);
     } else if (selectedOption === 'landmarks') {
