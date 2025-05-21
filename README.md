@@ -1,7 +1,5 @@
 Face Detection Web App using face-api.js
 
-![Face Detection Demo](screenshot.png)
-
 🌐 Live Demo
 
 [Click here to view the live site](https://laiba09saleem.github.io/Task-Manager/)
