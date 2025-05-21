@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  // Load face-api.js models
   await loadModels();
 
+  // DOM elements
   const inputType = document.getElementById('inputType');
   const imageUploadContainer = document.getElementById('imageUploadContainer');
   const videoControls = document.getElementById('videoControls');
@@ -15,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const confidenceValue = document.getElementById('confidenceValue');
   const resultsTable = document.getElementById('resultsTable');
 
+  // Variables
   let stream = null;
   let detectionInterval = null;
   let options = {
@@ -25,6 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     minConfidence: 0.5
   };
 
+  // Event listeners
   inputType.addEventListener('change', handleInputTypeChange);
   startVideoBtn.addEventListener('click', startVideo);
   stopVideoBtn.addEventListener('click', stopVideo);
@@ -32,21 +36,38 @@ document.addEventListener('DOMContentLoaded', async () => {
   detectionOptions.addEventListener('change', updateDetectionOptions);
   minConfidence.addEventListener('input', updateMinConfidence);
 
+  // Initial setup
   handleInputTypeChange();
 
+  // Functions
   async function loadModels() {
+    const CDN_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+    const LOCAL_URL = './models';
+    
     try {
-      await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-      await faceapi.nets.faceLandmark68TinyNet.loadFromUri('/models');
-      await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
-      await faceapi.nets.faceExpressionNet.loadFromUri('/models');
-      await faceapi.nets.ageGenderNet.loadFromUri('/models');
-      console.log('✅ All models loaded successfully!');
-    } catch (error) {
-      console.error('❌ Error loading models:', error);
-      alert('Error loading face detection models. Please ensure:\n1. You have a "models" folder with all required files\n2. You are running on a local server (not file://)');
+      console.log('Attempting to load models from CDN...');
+      await loadModelsFromUrl(CDN_URL);
+      console.log('✅ Models loaded successfully from CDN!');
+    } catch (cdnError) {
+      console.warn('CDN failed, attempting local models...', cdnError);
+      try {
+        await loadModelsFromUrl(LOCAL_URL);
+        console.log('✅ Models loaded successfully from local folder!');
+      } catch (localError) {
+        console.error('❌ Both CDN and local failed:', localError);
+        alert('Error loading face detection models. Please:\n1. Check your internet connection for CDN\n2. Ensure you have a "models" folder with all required files\n3. Verify you are running on a local server (not file://)');
+      }
     }
   }
+
+  async function loadModelsFromUrl(baseUrl) {
+    await faceapi.nets.tinyFaceDetector.loadFromUri(baseUrl);
+    await faceapi.nets.faceLandmark68TinyNet.loadFromUri(baseUrl);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(baseUrl);
+    await faceapi.nets.faceExpressionNet.loadFromUri(baseUrl);
+    await faceapi.nets.ageGenderNet.loadFromUri(baseUrl);
+  }
+
 
   function handleInputTypeChange() {
     const selectedType = inputType.value;
