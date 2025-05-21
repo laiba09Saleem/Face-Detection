@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Face Detection</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Professional Face Detection</h1>
+        
+        <div class="controls">
+            <div class="input-group">
+                <label for="inputType" >Input Source:</label>
+                <select id="inputType" style="color: black;">
+                    <option value="image">Image Upload</option>
+                    <option value="video">Live Video</option>
+                </select>
+            </div>
+            
+            <div id="imageUploadContainer" class="input-group">
+                <label for="imageUpload">Upload Image:</label><br>
+                <input type="file" id="imageUpload" accept="image/*">
+            </div>
+            
+            <div id="videoControls" class="input-group" style="display: none;">
+                <button id="startVideo">Start Video</button>
+                <button id="stopVideo" disabled>Stop Video</button>
+            </div>
+            
+            <div class="input-group">
+                <label for="detectionOptions">Detection Options:</label>
+                <select id="detectionOptions" multiple>
+                    <option value="face" selected>Face Detection</option>
+                    <option value="landmarks" selected>Facial Landmarks</option>
+                    <option value="expressions">Facial Expressions</option>
+                    <option value="ageGender">Age & Gender</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="minConfidence">Min Confidence:</label>
+                <input type="range" id="minConfidence" min="0" max="1" step="0.01" value="0.5">
+                <span id="confidenceValue">0.5</span>
+            </div>
+        </div>
+        
+        <div class="results">
+            <div class="media-container">
+                <img id="inputImage" style="display: none;">
+                <video id="inputVideo" autoplay muted playsinline style="display: none;"></video>
+                <canvas id="overlay"></canvas>
+            </div>
+            
+            <div class="detection-results">
+                <h2>Detection Results</h2>
+                <div id="resultsTable"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
