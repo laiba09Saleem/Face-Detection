@@ -1,8 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  // Load face-api.js models
   await loadModels();
 
-  // DOM elements
   const inputType = document.getElementById('inputType');
   const imageUploadContainer = document.getElementById('imageUploadContainer');
   const videoControls = document.getElementById('videoControls');
@@ -12,34 +10,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   const inputImage = document.getElementById('inputImage');
   const inputVideo = document.getElementById('inputVideo');
   const overlay = document.getElementById('overlay');
-  const detectionOptions = document.getElementById('detectionOptions');
+  const detectionOptions = document.getElementById('detectionOptions'); // now a single select
   const minConfidence = document.getElementById('minConfidence');
   const confidenceValue = document.getElementById('confidenceValue');
   const resultsTable = document.getElementById('resultsTable');
 
-  // Variables
   let stream = null;
   let detectionInterval = null;
-  let options = {
-    detectFace: true,
-    detectLandmarks: true,
-    detectExpressions: false,
-    detectAgeGender: false,
-    minConfidence: 0.5
-  };
 
-  // Event listeners
+  // Default detection option
+  let selectedOption = 'face'; 
+
+  // Minimum confidence threshold
+  let minConf = 0.5;
+
   inputType.addEventListener('change', handleInputTypeChange);
   startVideoBtn.addEventListener('click', startVideo);
   stopVideoBtn.addEventListener('click', stopVideo);
   imageUpload.addEventListener('change', handleImageUpload);
-  detectionOptions.addEventListener('change', updateDetectionOptions);
+  detectionOptions.addEventListener('change', updateDetectionOption);
   minConfidence.addEventListener('input', updateMinConfidence);
 
-  // Initial setup
   handleInputTypeChange();
+  updateMinConfidence();
 
-  // Functions
   async function loadModels() {
     try {
       await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
@@ -126,19 +120,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     reader.readAsDataURL(file);
   }
 
-  function updateDetectionOptions() {
-    const selectedOptions = Array.from(detectionOptions.selectedOptions)
-      .map(option => option.value);
-
-    options.detectFace = selectedOptions.includes('face');
-    options.detectLandmarks = selectedOptions.includes('landmarks');
-    options.detectExpressions = selectedOptions.includes('expressions');
-    options.detectAgeGender = selectedOptions.includes('ageGender');
+  function updateDetectionOption() {
+    selectedOption = detectionOptions.value;  // Single select, just get value
   }
 
   function updateMinConfidence() {
-    options.minConfidence = parseFloat(minConfidence.value);
-    confidenceValue.textContent = options.minConfidence.toFixed(2);
+    minConf = parseFloat(minConfidence.value);
+    confidenceValue.textContent = minConf.toFixed(2);
   }
 
   async function detectFaces(input) {
@@ -149,47 +137,52 @@ document.addEventListener('DOMContentLoaded', async () => {
       height: input.height || input.videoHeight
     };
 
-    // Set overlay size to match input size
     overlay.width = displaySize.width;
     overlay.height = displaySize.height;
-
     faceapi.matchDimensions(overlay, displaySize);
 
     let detections;
+
     try {
-      if (options.detectFace && !options.detectLandmarks && !options.detectExpressions && !options.detectAgeGender) {
-        detections = await faceapi.detectAllFaces(input, new faceapi.TinyFaceDetectorOptions({
-          inputSize: 512,
-          scoreThreshold: options.minConfidence
-        }));
+      // Prepare options for face detection
+      const tinyFaceOptions = new faceapi.TinyFaceDetectorOptions({
+        inputSize: 512,
+        scoreThreshold: minConf
+      });
+
+      // Detect faces with or without additional features
+      if (selectedOption === 'face') {
+        detections = await faceapi.detectAllFaces(input, tinyFaceOptions);
       } else {
-        detections = await faceapi.detectAllFaces(input, new faceapi.TinyFaceDetectorOptions({
-          inputSize: 512,
-          scoreThreshold: options.minConfidence
-        }))
-          .withFaceLandmarks(true)
-          .withFaceExpressions(options.detectExpressions)
-          .withAgeAndGender(options.detectAgeGender);
+        // Use withFaceLandmarks, withFaceExpressions, withAgeAndGender selectively based on selectedOption
+        detections = await faceapi.detectAllFaces(input, tinyFaceOptions);
+
+        if (selectedOption === 'landmarks') {
+          detections = await faceapi.detectAllFaces(input, tinyFaceOptions).withFaceLandmarks(true);
+        } else if (selectedOption === 'expressions') {
+          detections = await faceapi.detectAllFaces(input, tinyFaceOptions).withFaceExpressions();
+        } else if (selectedOption === 'ageGender') {
+          detections = await faceapi.detectAllFaces(input, tinyFaceOptions).withAgeAndGender();
+        }
       }
     } catch (error) {
       console.error('Detection error:', error);
+      resultsTable.innerHTML = '<p>Error during detection. See console for details.</p>';
       return;
     }
-
-    console.log('Detections:', detections); // For debugging
 
     const resizedDetections = faceapi.resizeResults(detections, displaySize);
 
     const context = overlay.getContext('2d');
     context.clearRect(0, 0, overlay.width, overlay.height);
 
-    if (options.detectFace) {
+    // Draw detection overlays based on selected option
+    if (selectedOption === 'face') {
       faceapi.draw.drawDetections(overlay, resizedDetections);
-    }
-    if (options.detectLandmarks) {
+    } else if (selectedOption === 'landmarks') {
       faceapi.draw.drawFaceLandmarks(overlay, resizedDetections);
-    }
-    if (options.detectExpressions) {
+    } else if (selectedOption === 'expressions') {
+      faceapi.draw.drawDetections(overlay, resizedDetections);
       resizedDetections.forEach(detection => {
         if (detection.expressions) {
           const expression = Object.entries(detection.expressions)
@@ -201,8 +194,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           ).draw(overlay);
         }
       });
-    }
-    if (options.detectAgeGender) {
+    } else if (selectedOption === 'ageGender') {
+      faceapi.draw.drawDetections(overlay, resizedDetections);
       resizedDetections.forEach(detection => {
         if (detection.age && detection.gender) {
           const box = detection.detection.box;
@@ -218,45 +211,59 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function displayResults(detections) {
-    if (detections.length === 0) {
+    if (!detections.length) {
       resultsTable.innerHTML = '<p>No faces detected.</p>';
       return;
     }
 
-    const table = document.createElement('table');
-    table.innerHTML = `
-      <thead>
-          <tr>
-              <th>Face #</th>
-              ${options.detectFace ? '<th>Confidence</th>' : ''}
-              ${options.detectAgeGender ? '<th>Gender</th><th>Age</th>' : ''}
-              ${options.detectExpressions ? '<th>Dominant Expression</th>' : ''}
-          </tr>
-      </thead>
-      <tbody>
-          ${detections.map((detection, i) => `
-              <tr>
-                  <td>${i + 1}</td>
-                  ${options.detectFace ? `<td>${(detection.detection.score * 100).toFixed(2)}%</td>` : ''}
-                  ${options.detectAgeGender ? `
-                      <td>${detection.gender || 'N/A'}</td>
-                      <td>${detection.age ? Math.round(detection.age) : 'N/A'}</td>
-                  ` : ''}
-                  ${options.detectExpressions ? `
-                      <td>
-                          ${detection.expressions ?
-                            Object.entries(detection.expressions)
-                              .reduce((a, b) => a[1] > b[1] ? a : b)[0] +
-                            ` (${Math.round(Object.entries(detection.expressions)
-                              .reduce((a, b) => a[1] > b[1] ? a : b)[1] * 100)}%)` :
-                            'N/A'}
-                      </td>
-                  ` : ''}
-              </tr>
-          `).join('')}
-      </tbody>
-    `;
+    let tableHTML = `
+      <table border="1" cellpadding="6" cellspacing="0">
+        <thead><tr><th>#</th>`;
 
-    resultsTable.appendChild(table);
+    if (selectedOption === 'face') {
+      tableHTML += `<th>Confidence</th>`;
+    } else if (selectedOption === 'ageGender') {
+      tableHTML += `<th>Gender</th><th>Age</th>`;
+    } else if (selectedOption === 'expressions') {
+      tableHTML += `<th>Dominant Expression</th>`;
+    } else if (selectedOption === 'landmarks') {
+      tableHTML += `<th>Landmarks (first 3 points)</th>`;
+    }
+
+    tableHTML += `</tr></thead><tbody>`;
+
+    detections.forEach((d, i) => {
+      tableHTML += `<tr><td>${i + 1}</td>`;
+
+      if (selectedOption === 'face') {
+        const score = d?.detection?.score ? `${(d.detection.score * 100).toFixed(2)}%` : 'N/A';
+        tableHTML += `<td>${score}</td>`;
+      } else if (selectedOption === 'ageGender') {
+        const gender = d?.gender ?? 'N/A';
+        const age = d?.age ? Math.round(d.age) : 'N/A';
+        tableHTML += `<td>${gender}</td><td>${age}</td>`;
+      } else if (selectedOption === 'expressions') {
+        if (d.expressions) {
+          const topExpr = Object.entries(d.expressions).reduce((a, b) => a[1] > b[1] ? a : b);
+          tableHTML += `<td>${topExpr[0]} (${(topExpr[1] * 100).toFixed(2)}%)</td>`;
+        } else {
+          tableHTML += `<td>N/A</td>`;
+        }
+      } else if (selectedOption === 'landmarks') {
+        if (d.landmarks) {
+          const points = d.landmarks.positions.slice(0, 3)
+            .map(p => `(${Math.round(p.x)}, ${Math.round(p.y)})`)
+            .join(', ');
+          tableHTML += `<td>${points}</td>`;
+        } else {
+          tableHTML += `<td>N/A</td>`;
+        }
+      }
+
+      tableHTML += `</tr>`;
+    });
+
+    tableHTML += `</tbody></table>`;
+    resultsTable.innerHTML = tableHTML;
   }
 });

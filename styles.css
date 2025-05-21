@@ -129,7 +129,7 @@ button:disabled {
     overflow: hidden;
     border-radius: 15px;
     background: #111;
-    padding: 50px;
+    padding: 5cqh;
     width: 100%;
 }
 
@@ -141,6 +141,7 @@ button:disabled {
     height: auto;
     border-radius: 10px;
 }
+
 
 /* Detection Results */
 .detection-results {
@@ -164,6 +165,109 @@ button:disabled {
     margin-top: 5px;
     color: #00ffa1;
 }
+
+/* Results Table Styling */
+
+#resultsTable table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1rem;
+  color: #e0e0e0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Header */
+#resultsTable thead tr {
+  background: linear-gradient(90deg, #00eaff, #ff9d00);
+  color: #111;
+  font-weight: 700;
+  text-align: left;
+  letter-spacing: 0.05em;
+}
+
+/* Header cells */
+#resultsTable th {
+  padding: 14px 20px;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+/* Body rows */
+#resultsTable tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  transition: background-color 0.3s ease;
+}
+
+/* Alternate row shading */
+#resultsTable tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Hover effect */
+#resultsTable tbody tr:hover {
+  background: rgba(0, 234, 255, 0.15);
+  cursor: pointer;
+}
+
+/* Body cells */
+#resultsTable td {
+  padding: 12px 20px;
+  vertical-align: middle;
+  color: #ddd;
+  text-shadow: 0 0 2px rgba(0,0,0,0.8);
+}
+
+/* Responsive - stack rows on small screens */
+@media (max-width: 600px) {
+  #resultsTable table,
+  #resultsTable thead,
+  #resultsTable tbody,
+  #resultsTable th,
+  #resultsTable td,
+  #resultsTable tr {
+    display: block;
+    width: 100%;
+  }
+
+  #resultsTable thead tr {
+    display: none;
+  }
+
+  #resultsTable tbody tr {
+    margin-bottom: 1rem;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 10px 15px;
+  }
+
+  #resultsTable tbody td {
+    padding-left: 50%;
+    position: relative;
+    text-align: right;
+    color: #00eaff;
+    font-weight: 600;
+  }
+
+  #resultsTable tbody td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 15px;
+    width: 45%;
+    padding-left: 10px;
+    white-space: nowrap;
+    font-weight: 700;
+    color: #ff9d00;
+    text-shadow: 0 0 5px #ff9d00;
+    text-align: left;
+  }
+}
+
 
 /* Media Queries for Responsiveness */
 @media (max-width: 768px) {
